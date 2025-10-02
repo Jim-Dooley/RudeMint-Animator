@@ -35,11 +35,44 @@ function initializeApp() {
   let isPlaying = false;
   let currentFrame = 0;
   let fps = 30;
-  let duration = 10; // seconds
-  let maxFrames = duration * fps; // calculated dynamically
+  let durationBars = 4; // duration in bars
+  let bpm = 120;
+  let timeSignature = { numerator: 4, denominator: 4 };
+  let bpmChanges = new Map(); // bar -> bpm (for tempo automation)
+  let maxFrames = calculateMaxFrames(); // calculated dynamically
   let keyframes = new Map(); // frame -> canvas JSON
   let audioPath = null;
   let wavesurfer = null;
+
+  // Calculate max frames based on musical time
+  function calculateMaxFrames() {
+    const beatsPerBar = timeSignature.numerator;
+    const totalBeats = durationBars * beatsPerBar;
+    const secondsPerBeat = 60 / bpm;
+    const totalSeconds = totalBeats * secondsPerBeat;
+    return Math.floor(totalSeconds * fps);
+  }
+
+  // Convert frame to musical time
+  function frameToMusicalTime(frame) {
+    const seconds = frame / fps;
+    const beatsPerBar = timeSignature.numerator;
+    const secondsPerBeat = 60 / bpm;
+    const totalBeats = seconds / secondsPerBeat;
+    const bar = Math.floor(totalBeats / beatsPerBar) + 1;
+    const beat = Math.floor(totalBeats % beatsPerBar) + 1;
+    const subdivision = Math.floor((totalBeats % 1) * 4) + 1; // 16th notes
+    return { bar, beat, subdivision, seconds };
+  }
+
+  // Convert musical time to frame
+  function musicalTimeToFrame(bar, beat, subdivision = 1) {
+    const beatsPerBar = timeSignature.numerator;
+    const totalBeats = (bar - 1) * beatsPerBar + (beat - 1) + (subdivision - 1) / 4;
+    const secondsPerBeat = 60 / bpm;
+    const seconds = totalBeats * secondsPerBeat;
+    return Math.floor(seconds * fps);
+  }
 
   // Tool selection
   document.getElementById('select-tool').addEventListener('click', () => {
@@ -345,46 +378,140 @@ function initializeApp() {
   }
 
   function updateCurrentTime() {
-    const time = (currentFrame / fps).toFixed(2);
+    const musicalTime = frameToMusicalTime(currentFrame);
     const timeDisplay = document.getElementById('current-time');
-    if (timeDisplay) timeDisplay.textContent = `${time}s`;
+    if (timeDisplay) {
+      timeDisplay.textContent = `${musicalTime.bar}.${musicalTime.beat}.${musicalTime.subdivision} (${musicalTime.seconds.toFixed(2)}s)`;
+    }
   }
 
   // FPS input
   document.getElementById('fps-input').addEventListener('change', (e) => {
     fps = parseInt(e.target.value);
-    maxFrames = duration * fps;
+    maxFrames = calculateMaxFrames();
     drawTimeline();
   });
 
-  // Duration input
+  // Duration input (now in bars)
   document.getElementById('duration-input').addEventListener('change', (e) => {
-    duration = parseFloat(e.target.value);
-    maxFrames = duration * fps;
+    durationBars = parseInt(e.target.value);
+    maxFrames = calculateMaxFrames();
     drawTimeline();
+  });
+
+  // BPM input
+  document.getElementById('bpm-input').addEventListener('change', (e) => {
+    bpm = parseFloat(e.target.value);
+    maxFrames = calculateMaxFrames();
+    updateCurrentTime();
+    drawTimeline();
+  });
+
+  // Time signature inputs
+  document.getElementById('time-sig-numerator').addEventListener('change', (e) => {
+    timeSignature.numerator = parseInt(e.target.value);
+    maxFrames = calculateMaxFrames();
+    updateCurrentTime();
+    drawTimeline();
+  });
+
+  document.getElementById('time-sig-denominator').addEventListener('change', (e) => {
+    timeSignature.denominator = parseInt(e.target.value);
+    maxFrames = calculateMaxFrames();
+    updateCurrentTime();
+    drawTimeline();
+  });
+
+  // Add BPM change
+  document.getElementById('add-bpm-change-btn').addEventListener('click', () => {
+    const musicalTime = frameToMusicalTime(currentFrame);
+    const newBPM = parseFloat(prompt(`Add BPM change at bar ${musicalTime.bar}.\nEnter new BPM:`, bpm));
+    if (newBPM && !isNaN(newBPM) && newBPM > 0) {
+      bpmChanges.set(musicalTime.bar, newBPM);
+      drawTimeline();
+      alert(`BPM change to ${newBPM} added at bar ${musicalTime.bar}`);
+    }
   });
 
   // Timeline drawing
   function drawTimeline() {
     timelineCtx.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
 
-    // Draw frame markers
-    for (let i = 0; i <= maxFrames; i++) {
-      const x = (i / maxFrames) * timelineCanvas.width;
-      timelineCtx.strokeStyle = i % 30 === 0 ? '#000' : '#ccc';
-      timelineCtx.lineWidth = i % 30 === 0 ? 2 : 1;
-      timelineCtx.beginPath();
-      timelineCtx.moveTo(x, 0);
-      timelineCtx.lineTo(x, i % 30 === 0 ? 20 : 10);
-      timelineCtx.stroke();
+    // Draw musical time markers (bars and beats)
+    const beatsPerBar = timeSignature.numerator;
+    const totalBars = durationBars;
+
+    for (let bar = 1; bar <= totalBars; bar++) {
+      for (let beat = 1; beat <= beatsPerBar; beat++) {
+        const frame = musicalTimeToFrame(bar, beat);
+        if (frame > maxFrames) continue;
+
+        const x = (frame / maxFrames) * timelineCanvas.width;
+
+        // Bar markers are thicker and black
+        if (beat === 1) {
+          timelineCtx.strokeStyle = '#000';
+          timelineCtx.lineWidth = 2;
+          timelineCtx.beginPath();
+          timelineCtx.moveTo(x, 0);
+          timelineCtx.lineTo(x, 30);
+          timelineCtx.stroke();
+
+          // Bar number label
+          timelineCtx.fillStyle = '#000';
+          timelineCtx.font = '10px monospace';
+          timelineCtx.fillText(bar.toString(), x + 2, 10);
+        } else {
+          // Beat markers are thinner and gray
+          timelineCtx.strokeStyle = '#999';
+          timelineCtx.lineWidth = 1;
+          timelineCtx.beginPath();
+          timelineCtx.moveTo(x, 0);
+          timelineCtx.lineTo(x, 15);
+          timelineCtx.stroke();
+        }
+
+        // Draw 16th note subdivisions
+        for (let sub = 2; sub <= 4; sub++) {
+          const subFrame = musicalTimeToFrame(bar, beat, sub);
+          if (subFrame > maxFrames) continue;
+          const subX = (subFrame / maxFrames) * timelineCanvas.width;
+          timelineCtx.strokeStyle = '#ddd';
+          timelineCtx.lineWidth = 1;
+          timelineCtx.beginPath();
+          timelineCtx.moveTo(subX, 0);
+          timelineCtx.lineTo(subX, 8);
+          timelineCtx.stroke();
+        }
+      }
     }
+
+    // Draw BPM changes
+    bpmChanges.forEach((changeBPM, bar) => {
+      const frame = musicalTimeToFrame(bar, 1);
+      if (frame > maxFrames) return;
+      const x = (frame / maxFrames) * timelineCanvas.width;
+
+      timelineCtx.fillStyle = '#ff9900';
+      timelineCtx.beginPath();
+      timelineCtx.moveTo(x, 35);
+      timelineCtx.lineTo(x - 5, 45);
+      timelineCtx.lineTo(x + 5, 45);
+      timelineCtx.closePath();
+      timelineCtx.fill();
+
+      // BPM label
+      timelineCtx.fillStyle = '#ff9900';
+      timelineCtx.font = '9px monospace';
+      timelineCtx.fillText(`${changeBPM}`, x - 10, 55);
+    });
 
     // Draw keyframes
     keyframes.forEach((_, frame) => {
       const x = (frame / maxFrames) * timelineCanvas.width;
       timelineCtx.fillStyle = '#ff0000';
       timelineCtx.beginPath();
-      timelineCtx.arc(x, 30, 5, 0, Math.PI * 2);
+      timelineCtx.arc(x, 65, 5, 0, Math.PI * 2);
       timelineCtx.fill();
     });
 
