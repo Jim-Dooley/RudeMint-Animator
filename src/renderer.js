@@ -35,6 +35,8 @@ function initializeApp() {
   let isPlaying = false;
   let currentFrame = 0;
   let fps = 30;
+  let duration = 10; // seconds
+  let maxFrames = duration * fps; // calculated dynamically
   let keyframes = new Map(); // frame -> canvas JSON
   let audioPath = null;
   let wavesurfer = null;
@@ -237,6 +239,16 @@ function initializeApp() {
     if (!isPlaying) return;
 
     currentFrame++;
+
+    // Stop if we've reached the end
+    if (currentFrame > maxFrames) {
+      isPlaying = false;
+      currentFrame = maxFrames;
+      updateCurrentTime();
+      drawTimeline();
+      return;
+    }
+
     interpolateFrame(currentFrame);
     updateCurrentTime();
 
@@ -341,6 +353,15 @@ function initializeApp() {
   // FPS input
   document.getElementById('fps-input').addEventListener('change', (e) => {
     fps = parseInt(e.target.value);
+    maxFrames = duration * fps;
+    drawTimeline();
+  });
+
+  // Duration input
+  document.getElementById('duration-input').addEventListener('change', (e) => {
+    duration = parseFloat(e.target.value);
+    maxFrames = duration * fps;
+    drawTimeline();
   });
 
   // Timeline drawing
@@ -348,8 +369,8 @@ function initializeApp() {
     timelineCtx.clearRect(0, 0, timelineCanvas.width, timelineCanvas.height);
 
     // Draw frame markers
-    for (let i = 0; i < 300; i++) {
-      const x = (i / 300) * timelineCanvas.width;
+    for (let i = 0; i <= maxFrames; i++) {
+      const x = (i / maxFrames) * timelineCanvas.width;
       timelineCtx.strokeStyle = i % 30 === 0 ? '#000' : '#ccc';
       timelineCtx.lineWidth = i % 30 === 0 ? 2 : 1;
       timelineCtx.beginPath();
@@ -360,7 +381,7 @@ function initializeApp() {
 
     // Draw keyframes
     keyframes.forEach((_, frame) => {
-      const x = (frame / 300) * timelineCanvas.width;
+      const x = (frame / maxFrames) * timelineCanvas.width;
       timelineCtx.fillStyle = '#ff0000';
       timelineCtx.beginPath();
       timelineCtx.arc(x, 30, 5, 0, Math.PI * 2);
@@ -368,7 +389,7 @@ function initializeApp() {
     });
 
     // Draw playhead
-    const playheadX = (currentFrame / 300) * timelineCanvas.width;
+    const playheadX = (currentFrame / maxFrames) * timelineCanvas.width;
     timelineCtx.strokeStyle = '#0000ff';
     timelineCtx.lineWidth = 2;
     timelineCtx.beginPath();
@@ -381,7 +402,7 @@ function initializeApp() {
   timelineCanvas.addEventListener('click', (e) => {
     const rect = timelineCanvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    currentFrame = Math.floor((x / timelineCanvas.width) * 300);
+    currentFrame = Math.floor((x / timelineCanvas.width) * maxFrames);
     interpolateFrame(currentFrame);
     updateCurrentTime();
     drawTimeline();
