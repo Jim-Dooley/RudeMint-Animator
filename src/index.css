@@ -1,0 +1,150 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#toolbar {
+  background-color: #2d2d2d;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+#toolbar h1 {
+  font-size: 18px;
+  color: #4a9eff;
+  margin-right: 20px;
+}
+
+.tool-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tool-btn {
+  padding: 8px 16px;
+  background-color: #3d3d3d;
+  color: #ffffff;
+  border: 1px solid #4d4d4d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tool-btn:hover {
+  background-color: #4d4d4d;
+}
+
+.tool-btn.active {
+  background-color: #4a9eff;
+  border-color: #4a9eff;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+input[type="color"] {
+  width: 40px;
+  height: 30px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+input[type="number"] {
+  width: 60px;
+  padding: 4px 8px;
+  background-color: #3d3d3d;
+  color: #ffffff;
+  border: 1px solid #4d4d4d;
+  border-radius: 4px;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #4a9eff;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+button:hover {
+  background-color: #3a8eef;
+}
+
+#canvas-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #2d2d2d;
+  padding: 20px;
+  overflow: auto;
+}
+
+#canvas {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+#timeline-container {
+  background-color: #252525;
+  border-top: 1px solid #3d3d3d;
+  padding: 15px;
+}
+
+#timeline-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#current-time {
+  font-size: 14px;
+  color: #4a9eff;
+  margin-left: auto;
+}
+
+#waveform {
+  margin-bottom: 10px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#timeline {
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+#timeline-canvas {
+  width: 100%;
+  height: 100px;
+  cursor: pointer;
+  background-color: #2d2d2d;
+  border-radius: 4px;
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RudeMint Animator</title>
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar">
+      <h1>RudeMint Animator</h1>
+      <div class="tool-group">
+        <button id="select-tool" class="tool-btn active">Select</button>
+        <button id="rect-tool" class="tool-btn">Rectangle</button>
+        <button id="circle-tool" class="tool-btn">Circle</button>
+        <button id="line-tool" class="tool-btn">Line</button>
+      </div>
+      <div class="tool-group">
+        <label>Fill: <input type="color" id="fill-color" value="#ff0000"></label>
+        <label>Stroke: <input type="color" id="stroke-color" value="#000000"></label>
+      </div>
+      <div class="tool-group">
+        <button id="import-audio-btn">Import Audio</button>
+        <button id="export-btn">Export MP4</button>
+      </div>
+    </div>
+
+    <div id="canvas-container">
+      <canvas id="canvas" width="1280" height="720"></canvas>
+    </div>
+
+    <div id="timeline-container">
+      <div id="timeline-controls">
+        <button id="rewind-btn">Rewind</button>
+        <button id="play-btn">Play</button>
+        <button id="pause-btn">Pause</button>
+        <button id="stop-btn">Stop</button>
+        <button id="add-keyframe-btn">Add Keyframe</button>
+        <span id="current-time">0.00s</span>
+        <label>FPS: <input type="number" id="fps-input" value="30" min="1" max="60"></label>
+      </div>
+      <div id="waveform"></div>
+      <div id="timeline">
+        <canvas id="timeline-canvas" width="1280" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+  <script src="https://unpkg.com/wavesurfer.js@7.4.0/dist/wavesurfer.min.js"></script>
+</body>
+</html>
